@@ -5,6 +5,9 @@
 #include<Windows.h>
 #include"resource.h"
 
+CONST CHAR gsz_LOGIN_INVITATION[] = "Введите имя пользователя";
+CONST CHAR gsz_PASSWORD_INVITATION[] = "Введите пароль";
+
 BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 /*
 ---------------------------
@@ -70,11 +73,38 @@ BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		HICON hIcon = LoadIcon(GetModuleHandle(NULL), (LPSTR)IDI_ICON1);
 		SendMessage(hwnd, WM_SETICON, 0, (LPARAM)hIcon);
+
+		//Получаем обработчики окна тектовых полей
+		//HWND - Handler to Window (Обработчик окна)
+		HWND hEditLogin = GetDlgItem(hwnd, IDC_EDIT_LOGIN);
+		HWND hEditPassword = GetDlgItem(hwnd, IDC_EDIT_PASSWORD);
+
+		//Для того чтобы установить текст в окна hEditLogin и hEditPassword, нужно отправить сообщение этим окнам:
+		SendMessage(hEditLogin, WM_SETTEXT, 0, (LPARAM)gsz_LOGIN_INVITATION);
+		SendMessage(hEditPassword, WM_SETTEXT, 0, (LPARAM)gsz_PASSWORD_INVITATION);
 	}
 	break;
 	case WM_COMMAND:	//Обработка команд нажатия кнопок
 		switch (LOWORD(wParam))
 		{
+		case IDC_EDIT_LOGIN:
+		{
+			HWND hEditLogin = GetDlgItem(hwnd, IDC_EDIT_LOGIN);
+			CONST INT SIZE = 256;
+			CHAR sz_buffer[SIZE] = {};
+			SendMessage(hEditLogin, WM_GETTEXT, SIZE, (LPARAM)sz_buffer);
+			if (HIWORD(wParam) == EN_SETFOCUS)
+			{
+				if (strcmp(sz_buffer, gsz_LOGIN_INVITATION) == 0)
+					SendMessage(hEditLogin, WM_SETTEXT, 0, (LPARAM)"");
+			}
+			if (HIWORD(wParam) == EN_KILLFOCUS)
+			{
+				if (strlen(sz_buffer) == 0)
+					SendMessage(hEditLogin, WM_SETTEXT, 0, (LPARAM)gsz_LOGIN_INVITATION);
+			}
+		}
+		break;
 		case IDC_BUTTON_COPY:
 		{
 			//Создаем буфер, через который будет производиться копирование:
