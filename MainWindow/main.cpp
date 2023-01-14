@@ -1,12 +1,15 @@
-#include<Windows.h>
+п»ї#include<Windows.h>
+#include<stdio.h>
 
 CONST CHAR gsz_MY_WINDOW_CLASS[] = "MYWindowClass";
+CONST CHAR gsz_MY_WINDOW_NAME[] = "My First Window";
+
 
 INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lparam);
 
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, INT nCmdShow)
 {
-	//1) Регистрация класса окна
+	//1) Р РµРіРёСЃС‚СЂР°С†РёСЏ РєР»Р°СЃСЃР° РѕРєРЅР°
 	WNDCLASSEX wc;
 	ZeroMemory(&wc, sizeof(wc));
 	
@@ -14,9 +17,11 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, IN
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
 	wc.style = 0;
-	wc.hIcon = LoadIcon(hInstance, IDI_APPLICATION);
-	wc.hIconSm = LoadIcon(hInstance, IDI_APPLICATION);
-	wc.hCursor = LoadCursor(hInstance, IDC_ARROW);
+	wc.hIcon = (HICON)LoadImage(hInstance, "Folder_Gear.ico",IMAGE_ICON,LR_DEFAULTSIZE,LR_DEFAULTSIZE,LR_LOADFROMFILE);
+	wc.hIconSm = (HICON)LoadImage(hInstance, "settings.ico",IMAGE_ICON,LR_DEFAULTSIZE,LR_DEFAULTSIZE,LR_LOADFROMFILE);
+	wc.hCursor = (HICON)LoadCursorFromFile("Starcraft.ani");
+	
+	//wc.hCursor = LoadCursor(hInstance, IDC_ARROW);
 	wc.hInstance = hInstance;
 	wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
 	wc.lpfnWndProc = (WNDPROC)WndProc;
@@ -29,17 +34,25 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, IN
 		return 0;
 	}
 
-	//2) Cоздание окна
+	//2) CРѕР·РґР°РЅРёРµ РѕРєРЅР°
+
+	int scren_width = GetSystemMetrics(SM_CXSCREEN);
+	int scren_height = GetSystemMetrics(SM_CYSCREEN);
+	int window_widht = scren_width * 3 / 4;
+	int window_height = scren_height * 3 / 4;
+	int start_x = scren_width / 8;
+	int start_y = scren_height / 8;
+
 	HWND hwnd = CreateWindowEx
 	(
 		NULL, //ExStyle
 		gsz_MY_WINDOW_CLASS,    //Class name
 		"My First Window",    //Window name  
-		WS_EX_OVERLAPPEDWINDOW, //dwStyle
-		CW_USEDEFAULT, CW_USEDEFAULT,  //Начальная позиция окна
-		CW_USEDEFAULT, CW_USEDEFAULT,  //Размер окна
-		NULL,       //HWND родительского окна. У главного окна НЕТ родительского окна  
-		NULL,       //Menu отсутстыует
+		WS_OVERLAPPEDWINDOW, //dwStyle
+		start_x, start_y,  //РќР°С‡Р°Р»СЊРЅР°СЏ РїРѕР·РёС†РёСЏ РѕРєРЅР°
+		window_widht, window_height,  //Р Р°Р·РјРµСЂ РѕРєРЅР°
+		NULL,       //HWND СЂРѕРґРёС‚РµР»СЊСЃРєРѕРіРѕ РѕРєРЅР°. РЈ РіР»Р°РІРЅРѕРіРѕ РѕРєРЅР° РќР•Рў СЂРѕРґРёС‚РµР»СЊСЃРєРѕРіРѕ РѕРєРЅР°  
+		NULL,       //Menu РѕС‚СЃСѓС‚СЃС‚С‹СѓРµС‚
 		hInstance,
 		NULL
 		);
@@ -52,7 +65,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, IN
 	ShowWindow(hwnd, nCmdShow);
 	UpdateWindow(hwnd);
 
-	//3) Запуск цикла сообщений
+	//3) Р—Р°РїСѓСЃРє С†РёРєР»Р° СЃРѕРѕР±С‰РµРЅРёР№
 	MSG msg;
 	while (GetMessage(&msg, NULL, 0, 0) > 0)
 	{
@@ -68,18 +81,31 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_CREATE:	break;
 	case WM_COMMAND:break;
+	case WM_SIZE:
+	case WM_MOVE:
+	{
+		RECT rect;
+		GetWindowRect(hwnd, &rect);
+		CONST INT SIZE = 256;
+		CHAR sz_buffer[SIZE]={};
+		sprintf(sz_buffer, "%S, Position %i:%i Size: %i:%i",gsz_MY_WINDOW_NAME,
+			rect.left.rect.top,
+			rect.right - rect.left, rect.botton - rect.top);
+		SendMessage(hwnd,WM_SETTEXT,)
+	}
+		break;
 	case WM_DESTROY: PostQuitMessage(0); break;
 	case WM_CLOSE:
 		switch
 			(
 				MessageBox(hwnd,
-					"Вы действительно хотите закрыть окно?",
-					"Вопрос на миллион долларов",
+					"Р’С‹ РґРµР№СЃС‚РІРёС‚РµР»СЊРЅРѕ С…РѕС‚РёС‚Рµ Р·Р°РєСЂС‹С‚СЊ РѕРєРЅРѕ?",
+					"Р’РѕРїСЂРѕСЃ РЅР° РјРёР»Р»РёРѕРЅ РґРѕР»Р»Р°СЂРѕРІ",
 					MB_YESNO | MB_ICONQUESTION)
 				)
 		{
 		case IDYES:
-			MessageBox(hwnd, "Лучше бы двери закрыли)", "Полезная инфа", MB_OK | MB_ICONINFORMATION);
+			MessageBox(hwnd, "Р›СѓС‡С€Рµ Р±С‹ РґРІРµСЂРё Р·Р°РєСЂС‹Р»Рё)", "РџРѕР»РµР·РЅР°СЏ РёРЅС„Р°", MB_OK | MB_ICONINFORMATION);
 			DestroyWindow(hwnd);
 			break;
 		}
