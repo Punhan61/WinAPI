@@ -32,6 +32,10 @@ CONST INT g_START_Y = 10;
 CONST CHAR gsz_MY_WINDOW_CLASS[] = "MyWindowClass";
 CONST CHAR gsz_WINDOW_NAME[] = "My Firs Window";
 
+double a, b;
+int operation;
+bool stored = TRUE;
+
 INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, INT nCmdShow)
@@ -123,12 +127,15 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		//Создаем кнопки:
 		int digit = 1;
 		char sz_digit[] = "0";
+		char sz_icon[256] = {};
+		sprintf(sz_icon, "ico_numbers\\100%i.ico", digit);
+		HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), sz_icon, IMAGE_ICON, 48, 48, LR_LOADFROMFILE);
 		for (int i = 0; i < 3; i++)
 		{
 			for (int j = 0; j < 3; j++)
 			{
 				sz_digit[0] = '0' + digit;
-				CreateWindowEx(
+				HWND hDigitButton = CreateWindowEx(
 					NULL, "BUTTON", sz_digit,
 					WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 					g_START_X + (g_BUTTON_SIZE + g_INTERVAL) * j,
@@ -139,6 +146,7 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					GetModuleHandle(NULL),
 					NULL
 				);
+				//SendMessage(hDigitButton, WM_SETICON, 0, (LPARAM)hIcon);
 				digit++;
 			}
 		}
@@ -204,13 +212,20 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		CONST INT SIZE = 256;
 		CHAR sz_buffer[SIZE] = {};
-		CHAR sz_digit[] = "0";
+		CHAR sz_digit[2] = {};
 		//sz_ - String Zero (NULL-Terminated Line - C-строка)
 		//https://ru.wikipedia.org/wiki/%D0%92%D0%B5%D0%BD%D0%B3%D0%B5%D1%80%D1%81%D0%BA%D0%B0%D1%8F_%D0%BD%D0%BE%D1%82%D0%B0%D1%86%D0%B8%D1%8F
 		HWND hEdit = GetDlgItem(hwnd, IDC_EDIT);
 		SendMessage(hEdit, WM_GETTEXT, SIZE, (LPARAM)sz_buffer);
 		if (LOWORD(wParam) >= IDC_BUTTON_0 && LOWORD(wParam) <= IDC_BUTTON_9)
 		{
+			if (stored == TRUE)
+			{
+				SendMessage(hEdit, WM_SETTEXT, 0, (LPARAM)"");
+				//ZeroMemory(sz_buffer, SIZE);
+				for (int i = 0; i < SIZE; i++)sz_buffer[i] = 0;
+				stored = FALSE;
+			}
 			sz_digit[0] = LOWORD(wParam) - 952;
 			strcat(sz_buffer, sz_digit);
 			SendMessage(hEdit, WM_SETTEXT, 0, (LPARAM)sz_buffer);
@@ -221,8 +236,39 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			strcat(sz_buffer, ".");
 			SendMessage(hEdit, WM_SETTEXT, 0, (LPARAM)sz_buffer);
 		}
+		if (LOWORD(wParam) == IDC_BUTTON_CLEAR)
+		{
+			SendMessage(hEdit, WM_SETTEXT, 0, (LPARAM)"");
+			a = b = 0;
+			operation = 0;
+			stored = TRUE;
+		}
 
-		if (LOWORD(wParam) == IDC_BUTTON_CLEAR)SendMessage(hEdit, WM_SETTEXT, 0, (LPARAM)"");
+		if (LOWORD(wParam) >= IDC_BUTTON_PLUS && LOWORD(wParam) <= IDC_BUTTON_SLASH)
+		{
+			SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BUTTON_EQUAL), 0);
+			SendMessage(hEdit, WM_GETTEXT, SIZE, (LPARAM)sz_buffer);
+			a = strtod(sz_buffer, NULL);	//strtod() - String to double
+			operation = LOWORD(wParam);
+			stored = true;
+		}
+
+		if (LOWORD(wParam) == IDC_BUTTON_EQUAL)
+		{
+			SendMessage(hEdit, WM_GETTEXT, SIZE, (LPARAM)sz_buffer);
+			b = strtod(sz_buffer, NULL);
+			switch (operation)
+			{
+			case IDC_BUTTON_PLUS:  a += b;	break;
+			case IDC_BUTTON_MINUS: a -= b;	break;
+			case IDC_BUTTON_ASTER: a *= b;	break;
+			case IDC_BUTTON_SLASH: a /= b;	break;
+			default: a = b;
+			}
+			sprintf(sz_buffer, "%f", a);
+			SendMessage(hEdit, WM_SETTEXT, 0, (LPARAM)sz_buffer);
+			stored = TRUE;
+		}
 	}
 	break;
 	case WM_KEYDOWN:
